@@ -1,7 +1,5 @@
 package ado.fun.code.locationize;
 
-import android.app.Activity;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -14,8 +12,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
-import android.util.Log;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 /**
@@ -30,6 +26,7 @@ public class GetDistance extends Service implements LocationListener {
     double lat, lon;
     double dist;
     int previous_notification_interrupt_setting;
+    int curBrightnessValue;
     LocationManager locationManager;
 
     @Nullable
@@ -85,17 +82,10 @@ public class GetDistance extends Service implements LocationListener {
     @Override
     public void onLocationChanged(final Location location) {
         Handler handler = new Handler(Looper.getMainLooper());
-
-        Log.d("Location", "Recieved1");
         dist = distance(lat, location.getLatitude(), lon, location.getLongitude());
-        if (dist < 500) {
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-            previous_notification_interrupt_setting = notificationManager.getCurrentInterruptionFilter();
-            notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-//            WindowManager.LayoutParams lp = ((Activity)getBaseContext()).getWindow().getAttributes();
-//            lp.screenBrightness = 0;
-//            ((Activity)getApplicationContext()).getWindow().setAttributes(lp);
+        if (dist < 400) {
+            startActivity(new Intent(this, MuteService.class));
+            onDestroy();
         }
         //Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
@@ -112,8 +102,10 @@ public class GetDistance extends Service implements LocationListener {
 
     @Override
     public void onProviderDisabled(String provider) {
-        Toast.makeText(getApplicationContext(), "Error Occurred", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "Please connect GPS", Toast.LENGTH_SHORT).show();
     }
+
+
 
     @Override
     public void onProviderEnabled(String provider) {
