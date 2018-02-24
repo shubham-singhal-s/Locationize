@@ -79,7 +79,8 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        final Intent in = new Intent(this, GetDistance.class);
+        //final Intent in = new Intent(this, GPStracker.class);
+        final Intent in=new Intent(this, GetDistance.class);
 
         findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
             @Override

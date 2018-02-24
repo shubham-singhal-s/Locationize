@@ -22,13 +22,14 @@ import android.widget.Toast;
  * Created by mahe on 24-02-2018.
  */
 
-public class GetDistance extends Service {
+public class GetDistance extends Service implements LocationListener {
 
     SharedPreferences sp;
     SharedPreferences.Editor edit;
     String lat_main, long_main;
     double lat, lon;
     double dist;
+    int previous_notification_interrupt_setting;
     LocationManager locationManager;
 
     @Nullable
@@ -38,76 +39,24 @@ public class GetDistance extends Service {
     }
 
     @Override
-    public void onCreate()
-    {
+    public void onCreate() {
     }
 
     @Override
-    public void onStart(Intent in, int startid)
-    {
-        sp = getSharedPreferences("coords",MODE_PRIVATE);
+    public void onStart(Intent in, int startid) {
+        sp = getSharedPreferences("coords", MODE_PRIVATE);
         edit = sp.edit();
-        if(sp.contains("Lat") && sp.contains("Long")){
-            lat_main=sp.getString("Lat", "");
-            long_main=sp.getString("Long", "");
-            lat=Double.parseDouble(lat_main);
-            lon=Double.parseDouble(long_main);
+        if (sp.contains("Lat") && sp.contains("Long")) {
+            lat_main = sp.getString("Lat", "");
+            long_main = sp.getString("Long", "");
+            lat = Double.parseDouble(lat_main);
+            lon = Double.parseDouble(long_main);
         }
 
         try {
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, new LocationListener() {
-                @Override
-                public void onLocationChanged(final Location location) {
-                    Handler handler = new Handler(Looper.getMainLooper());
-//                    handler.post(new Runnable() {
-//
-//                        @Override
-//                        public void run() {
-//                            Toast.makeText(getApplicationContext(),
-//                                    "Lat: " + location.getLatitude() + " Long: " + location.getLongitude(),
-//                                    Toast.LENGTH_SHORT).show();
-//                        }
-//                    });
-                    Log.d("Location","Recieved1" );
-                    dist = distance(lat,location.getLatitude(),lon,location.getLongitude());
-                    if(dist<500){
-                        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-
-                        int previous_notification_interrupt_setting = notificationManager.getCurrentInterruptionFilter();
-                        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-                        WindowManager.LayoutParams lp = ((Activity)getBaseContext()).getWindow().getAttributes();
-                        lp.screenBrightness = 0;
-                        ((Activity)getApplicationContext()).getWindow().setAttributes(lp);
-                    }
-                    //Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),
-                                    "Distance is: "+ dist,
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    //Toast.makeText(GetDistance.this, "Distance is: "+ dist, Toast.LENGTH_SHORT).show();
-                }
-                @Override
-                public void onProviderDisabled(String provider) {
-                    Toast.makeText(getApplicationContext(), "Error Occurred", Toast.LENGTH_SHORT).show();
-                }
-                @Override
-                public void onProviderEnabled(String provider) {
-                    // TODO Auto-generated method stub
-                }
-                @Override
-                public void onStatusChanged(String provider, int status,
-                                            Bundle extras) {
-                    // TODO Auto-generated method stub
-                }
-            });
-        }
-        catch(SecurityException e) {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, this);
+        } catch (SecurityException e) {
             e.printStackTrace();
         }
     }
@@ -129,8 +78,52 @@ public class GetDistance extends Service {
     }
 
     @Override
-    public void onDestroy(){
-        //locationManager.removeUpdates((LocationListener) this);
+    public void onDestroy() {
+        locationManager.removeUpdates(this);
+    }
+
+    @Override
+    public void onLocationChanged(final Location location) {
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        Log.d("Location", "Recieved1");
+        dist = distance(lat, location.getLatitude(), lon, location.getLongitude());
+        if (dist < 500) {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            previous_notification_interrupt_setting = notificationManager.getCurrentInterruptionFilter();
+            notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+//            WindowManager.LayoutParams lp = ((Activity)getBaseContext()).getWindow().getAttributes();
+//            lp.screenBrightness = 0;
+//            ((Activity)getApplicationContext()).getWindow().setAttributes(lp);
+        }
+        //Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(),
+                        "Distance is: " + dist,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+        //Toast.makeText(GetDistance.this, "Distance is: "+ dist, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        Toast.makeText(getApplicationContext(), "Error Occurred", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status,
+                                Bundle extras) {
+        // TODO Auto-generated method stub
     }
 
 }

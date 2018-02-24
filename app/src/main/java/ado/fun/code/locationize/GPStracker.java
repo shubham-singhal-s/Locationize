@@ -27,8 +27,6 @@ import android.widget.Toast;
 
 public class GPStracker extends Service implements LocationListener {
 
-    private final Context mContext;
-
     // flag for GPS status
     boolean isGPSEnabled = false;
 
@@ -51,14 +49,10 @@ public class GPStracker extends Service implements LocationListener {
     double lat, lon;
     double dist;
 
-    public GPStracker(Context context) {
-        this.mContext = context;
-    }
-
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
-        getLocation();
+        getLocation(getApplicationContext());
         sp = getSharedPreferences("coords",MODE_PRIVATE);
         edit = sp.edit();
         if(sp.contains("Lat") && sp.contains("Long")){
@@ -88,7 +82,7 @@ public class GPStracker extends Service implements LocationListener {
         });
     }
 
-    public Location getLocation() {
+    public Location getLocation(Context mContext) {
         try {
             locationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);
 
@@ -192,29 +186,29 @@ public class GPStracker extends Service implements LocationListener {
      * On pressing Settings button will lauch Settings Options
      * */
 
-    public void showSettingsAlert(){
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(mContext);
-
-        // Setting Dialog Title
-        alertDialog.setTitle("GPS settings");
-
-        // Setting Dialog Message
-        alertDialog.setMessage("GPS is not enabled. Please enable it in the settings menu to use the app.");
-
-        // On pressing Settings button
-        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog,int which) {
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                mContext.startActivity(intent);
-            }
-        });
-
-        // on pressing cancel button
-        alertDialog.setCancelable(false);
-
-        // Showing Alert Message
-        alertDialog.show();
-    }
+//    public void showSettingsAlert(){
+//        AlertDialog.Builder alertDialog = new AlertDialog.Builder(mContext);
+//
+//        // Setting Dialog Title
+//        alertDialog.setTitle("GPS settings");
+//
+//        // Setting Dialog Message
+//        alertDialog.setMessage("GPS is not enabled. Please enable it in the settings menu to use the app.");
+//
+//        // On pressing Settings button
+//        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+//            public void onClick(DialogInterface dialog,int which) {
+//                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//                mContext.startActivity(intent);
+//            }
+//        });
+//
+//        // on pressing cancel button
+//        alertDialog.setCancelable(false);
+//
+//        // Showing Alert Message
+//        alertDialog.show();
+//    }
 
 
     @Nullable
