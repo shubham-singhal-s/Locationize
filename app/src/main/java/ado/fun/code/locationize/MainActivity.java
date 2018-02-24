@@ -1,7 +1,9 @@
 package ado.fun.code.locationize;
 
+import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -14,7 +16,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -24,63 +25,79 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.model.LatLng;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
 
     TextView locationText;
-    Button places;
     SharedPreferences sp;
     SharedPreferences.Editor edit;
-    final static int PLACE_AUTOCOMPLETE_REQUEST_CODE=99;
-    double lat, lon, dist;
+    final static int PLACE_AUTOCOMPLETE_REQUEST_CODE = 99;
     String lat_main, long_main;
+    AlertDialog.Builder builder;
+    NotificationManager notificationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        sp = getSharedPreferences("coords",MODE_PRIVATE);
+        sp = getSharedPreferences("coords", MODE_PRIVATE);
         edit = sp.edit();
-        if(sp.contains("Lat") && sp.contains("Long")){
-        sp.getString("Lat", lat_main);
-        sp.getString("Long", long_main);}
-        else getMap();
+        if (sp.contains("Lat") && sp.contains("Long")) {
+            sp.getString("Lat", lat_main);
+            sp.getString("Long", long_main);
+        } else getMap();
 
         //Toast.makeText(this, "Lat is "+long_main, Toast.LENGTH_SHORT).show();
 
-        locationText=(TextView)findViewById(R.id.locText);
+        locationText = (TextView) findViewById(R.id.locText);
 
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, 101);
-
-        }
+        builder = new AlertDialog.Builder(this);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.System.canWrite(getApplicationContext())) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent, 200);
+
+                builder.setTitle("Permission Request")
+                        .setMessage("Permission required to access Settings. Enable Locationize to access settings.")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
+                                startActivityForResult(intent, 200);
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
 
             }
         }
 
-        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                     && !notificationManager.isNotificationPolicyAccessGranted()) {
+                builder.setTitle("Permission Request")
+                        .setMessage("Permission required to access Do Not Disturb. Enable Locationize to access settings.")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
 
-                Intent intent = new Intent(
-                        android.provider.Settings
-                                .ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                                Intent intent = new Intent(
+                                        android.provider.Settings
+                                                .ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                                startActivity(intent);
 
-                startActivity(intent);
 
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
             }
-
         }
 
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}, 101);
+
+        }
 
         findViewById(R.id.places).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,7 +106,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        final Intent in=new Intent(this, GetDistance.class);
+        final Intent in = new Intent(this, GetDistance.class);
 
         findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,7 +123,7 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-    public void getMap(){
+    public void getMap() {
         try {
             Intent intent =
                     new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
@@ -120,14 +137,13 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Place place = PlaceAutocomplete.getPlace(this, data);
-                LatLng latlong=place.getLatLng();
-                updatePreference(latlong.latitude,latlong.longitude);
+                LatLng latlong = place.getLatLng();
+                updatePreference(latlong.latitude, latlong.longitude);
             } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
                 Status status = PlaceAutocomplete.getStatus(this, data);
                 // TODO: Handle the error.
@@ -140,13 +156,12 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-
-    public void updatePreference(double c1,double c2){
-        edit.putString("Lat",String.valueOf(c1));
-        edit.putString("Long",String.valueOf(c2));
+    public void updatePreference(double c1, double c2) {
+        edit.putString("Lat", String.valueOf(c1));
+        edit.putString("Long", String.valueOf(c2));
         String rand;
         edit.commit();
-        rand=sp.getString("Lat","");
+        rand = sp.getString("Lat", "");
         //Toast.makeText(this, "Lat is "+rand, Toast.LENGTH_SHORT).show();
 
     }

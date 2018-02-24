@@ -38,12 +38,18 @@ public class MuteService extends Service {
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         sp = getSharedPreferences("coords", MODE_PRIVATE);
         edit = sp.edit();
+
+        try{
         prevMode = notificationManager.getCurrentInterruptionFilter();
         prevBrightness = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS);
-        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);}
+        catch(Exception e){
+            e.printStackTrace();
+        }
+
         storeStates(prevMode,prevBrightness);
         sendNotif();
-        startActivity(new Intent(getBaseContext(), DummyBrightnessActivity.class));
+        startActivity(new Intent(this, DummyBrightnessActivity.class));
     }
 
     @Override

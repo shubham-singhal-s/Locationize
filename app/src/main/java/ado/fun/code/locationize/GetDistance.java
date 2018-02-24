@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -83,9 +84,10 @@ public class GetDistance extends Service implements LocationListener {
     public void onLocationChanged(final Location location) {
         Handler handler = new Handler(Looper.getMainLooper());
         dist = distance(lat, location.getLatitude(), lon, location.getLongitude());
-        if (dist < 400) {
-            startActivity(new Intent(this, MuteService.class));
-            onDestroy();
+        if (dist < 1400) {
+            Log.d("Verma", "Verma");
+            startService(new Intent(getBaseContext(), MuteService.class));
+            locationManager.removeUpdates(this);
         }
         //Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {

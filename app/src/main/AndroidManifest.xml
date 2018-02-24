@@ -32,6 +32,8 @@
 
         <service android:name=".GetDistance" />
 
+        <service android:name=".MuteService" />
+
     </application>
 
 </manifest>
