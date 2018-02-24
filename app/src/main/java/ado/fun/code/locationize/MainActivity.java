@@ -1,26 +1,47 @@
 package ado.fun.code.locationize;
 
-import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.maps.model.LatLng;
 
 public class MainActivity extends AppCompatActivity{
 
-    LocationManager locationManager;
     TextView locationText;
+    Button places;
+    SharedPreferences sp;
+    SharedPreferences.Editor edit;
+    final static int PLACE_AUTOCOMPLETE_REQUEST_CODE=99;
+    double lat, lon, dist;
+    String lat_main, long_main;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sp = getSharedPreferences("coords",MODE_PRIVATE);
+        edit = sp.edit();
+        if(sp.contains("Lat") && sp.contains("Long")){
+        sp.getString("Lat", lat_main);
+        sp.getString("Long", long_main);}
+        else getMap();
+
+        //Toast.makeText(this, "Lat is "+long_main, Toast.LENGTH_SHORT).show();
 
         locationText=(TextView)findViewById(R.id.locText);
 
@@ -30,31 +51,93 @@ public class MainActivity extends AppCompatActivity{
 
         }
 
+
+
+        findViewById(R.id.places).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getMap();
+            }
+        });
+
+        final Intent in = new Intent(this, GetDistance.class);
+
+        findViewById(R.id.start).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startService(in);
+            }
+        });
+
+        findViewById(R.id.stop).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopService(in);
+            }
+        });
+    }
+
+    public void getMap(){
         try {
-            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    locationText.setText("Longitude: "+location.getLongitude() + "Latitude: " + location.getLatitude());
-                }
-                @Override
-                public void onProviderDisabled(String provider) {
-                    Toast.makeText(MainActivity.this, "Error Occurred", Toast.LENGTH_SHORT).show();
-                }
-                @Override
-                public void onProviderEnabled(String provider) {
-                    // TODO Auto-generated method stub
-                }
-                @Override
-                public void onStatusChanged(String provider, int status,
-                                            Bundle extras) {
-                    // TODO Auto-generated method stub
-                }
-            });
+            Intent intent =
+                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(MainActivity.this);
+            startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+        } catch (GooglePlayServicesRepairableException e) {
+            // TODO: Handle the error.
+        } catch (GooglePlayServicesNotAvailableException e) {
+            // TODO: Handle the error.
         }
-        catch(SecurityException e) {
-            e.printStackTrace();
+    }
+
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+//            if (resultCode == RESULT_OK) {
+//                Place place = PlaceAutocomplete.getPlace(this, data);
+//                Log.i("main ", "Place: " + place.getName());
+//                LatLng latlong=place.getLatLng();
+//                dist=distance(lat,latlong.latitude,lon,latlong.longitude);
+//                Toast.makeText(getApplicationContext(), "Distance is: "+dist, Toast.LENGTH_LONG).show();
+//            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+//                Status status = PlaceAutocomplete.getStatus(this, data);
+//                // TODO: Handle the error.
+//                Log.i("main ", status.getStatusMessage());
+//
+//            } else if (resultCode == RESULT_CANCELED) {
+//                // The user canceled the operation.
+//            }
+//        }
+//    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(this, data);
+                LatLng latlong=place.getLatLng();
+                updatePreference(latlong.latitude,latlong.longitude);
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                // TODO: Handle the error.
+                Log.i("main ", status.getStatusMessage());
+
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+            }
         }
+    }
+
+
+
+    public void updatePreference(double c1,double c2){
+        edit.putString("Lat",String.valueOf(c1));
+        edit.putString("Long",String.valueOf(c2));
+        String rand;
+        edit.commit();
+        rand=sp.getString("Lat","");
+        //Toast.makeText(this, "Lat is "+rand, Toast.LENGTH_SHORT).show();
 
     }
 
