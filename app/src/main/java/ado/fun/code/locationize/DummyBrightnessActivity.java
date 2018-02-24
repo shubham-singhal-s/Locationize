@@ -1,5 +1,6 @@
 package ado.fun.code.locationize;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -17,11 +18,14 @@ public class DummyBrightnessActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Intent in = getIntent();
+        int bright = in.getIntExtra("bright",0);
+
         Settings.System.putInt(this.getContentResolver(),
-                Settings.System.SCREEN_BRIGHTNESS, 0);
+                Settings.System.SCREEN_BRIGHTNESS, bright);
 
         WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenBrightness = 0;
+        lp.screenBrightness = bright;
         getWindow().setAttributes(lp);
 
         final Handler handler = new Handler();

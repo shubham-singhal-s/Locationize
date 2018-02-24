@@ -38,6 +38,7 @@ public class GetDistance extends Service implements LocationListener {
 
     @Override
     public void onCreate() {
+
     }
 
     @Override
