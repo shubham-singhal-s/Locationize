@@ -1,5 +1,7 @@
 package ado.fun.code.locationize;
 
+import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +15,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 /**
@@ -56,7 +59,7 @@ public class GetDistance extends Service {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, new LocationListener() {
                 @Override
                 public void onLocationChanged(final Location location) {
-//                    Handler handler = new Handler(Looper.getMainLooper());
+                    Handler handler = new Handler(Looper.getMainLooper());
 //                    handler.post(new Runnable() {
 //
 //                        @Override
@@ -68,7 +71,16 @@ public class GetDistance extends Service {
 //                    });
                     Log.d("Location","Recieved1" );
                     dist = distance(lat,location.getLatitude(),lon,location.getLongitude());
-                    Handler handler = new Handler(Looper.getMainLooper());
+                    if(dist<500){
+                        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+
+                        int previous_notification_interrupt_setting = notificationManager.getCurrentInterruptionFilter();
+                        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+                        WindowManager.LayoutParams lp = ((Activity)getBaseContext()).getWindow().getAttributes();
+                        lp.screenBrightness = 0;
+                        ((Activity)getApplicationContext()).getWindow().setAttributes(lp);
+                    }
+                    //Handler handler = new Handler(Looper.getMainLooper());
                     handler.post(new Runnable() {
 
                         @Override
@@ -114,6 +126,11 @@ public class GetDistance extends Service {
         double distance = R * c * 1000; // convert to meters
 
         return distance;
+    }
+
+    @Override
+    public void onDestroy(){
+        //locationManager.removeUpdates((LocationListener) this);
     }
 
 }

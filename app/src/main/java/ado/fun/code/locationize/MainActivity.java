@@ -1,8 +1,11 @@
 package ado.fun.code.locationize;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -51,6 +54,22 @@ public class MainActivity extends AppCompatActivity{
 
         }
 
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                    && !notificationManager.isNotificationPolicyAccessGranted()) {
+
+                Intent intent = new Intent(
+                        android.provider.Settings
+                                .ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+
+                startActivity(intent);
+
+            }
+
+        }
+
 
 
         findViewById(R.id.places).setOnClickListener(new View.OnClickListener() {
@@ -91,25 +110,6 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
-//            if (resultCode == RESULT_OK) {
-//                Place place = PlaceAutocomplete.getPlace(this, data);
-//                Log.i("main ", "Place: " + place.getName());
-//                LatLng latlong=place.getLatLng();
-//                dist=distance(lat,latlong.latitude,lon,latlong.longitude);
-//                Toast.makeText(getApplicationContext(), "Distance is: "+dist, Toast.LENGTH_LONG).show();
-//            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
-//                Status status = PlaceAutocomplete.getStatus(this, data);
-//                // TODO: Handle the error.
-//                Log.i("main ", status.getStatusMessage());
-//
-//            } else if (resultCode == RESULT_CANCELED) {
-//                // The user canceled the operation.
-//            }
-//        }
-//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
