@@ -2,9 +2,11 @@ package ado.fun.code.locationize;
 
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -34,24 +36,84 @@ public class MainActivity extends AppCompatActivity {
     String lat_main, long_main;
     AlertDialog.Builder builder;
     NotificationManager notificationManager;
+    BroadcastReceiver updateUIReciver;
+    BroadcastReceiver updateUIReciver2;
+    BroadcastReceiver updateUIReciver3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        DBHelper db=new DBHelper(getApplicationContext());
+        //db.dropTab();
+        Log.d("Val db: ", String.valueOf(db.isTableExist()));
+
+//        if(!db.isTableExist()){
+//            Intent in=new Intent(this, InputDays.class);
+//            startActivityForResult(in, 1);
+//        }
 
         sp = getSharedPreferences("coords", MODE_PRIVATE);
         edit = sp.edit();
         if (sp.contains("Lat") && sp.contains("Long")) {
             sp.getString("Lat", lat_main);
             sp.getString("Long", long_main);
-        } else getMap();
+        } else {
+            Intent in=new Intent(this, InputDays.class);
+            startActivityForResult(in, 1);
+            getMap();
+        }
+
+
 
         //Toast.makeText(this, "Lat is "+long_main, Toast.LENGTH_SHORT).show();
 
         locationText = (TextView) findViewById(R.id.locText);
 
         builder = new AlertDialog.Builder(this);
+
+        IntentFilter filter = new IntentFilter();
+
+        filter.addAction("ado.fun.code.locationize.off");
+
+        updateUIReciver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                locationText.setText("");
+
+            }
+        };
+        registerReceiver(updateUIReciver,filter);
+
+        IntentFilter filter2 = new IntentFilter();
+
+        filter2.addAction("ado.fun.code.locationize.on");
+
+        updateUIReciver2 = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                locationText.setText("Warming up the GPS...");
+
+            }
+        };
+        registerReceiver(updateUIReciver2,filter2);
+
+        IntentFilter filter3 = new IntentFilter();
+
+        filter3.addAction("ado.fun.code.locationize.stop");
+
+        updateUIReciver3 = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                findViewById(R.id.start).setVisibility(View.VISIBLE);
+                findViewById(R.id.stop).setVisibility(View.GONE);
+
+            }
+        };
+        registerReceiver(updateUIReciver3,filter3);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.System.canWrite(getApplicationContext())) {
@@ -64,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                                 startActivityForResult(intent, 200);
                             }
                         })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setIcon(R.drawable.icon)
                         .show();
 
             }
@@ -88,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                         })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setIcon(R.drawable.icon)
                         .show();
             }
         }
@@ -102,7 +164,21 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.places).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getMap();
+                builder.setTitle("Edit")
+                        .setMessage("TimeTable or Place?")
+                        .setPositiveButton("Timetable", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent in=new Intent(MainActivity.this, InputDays.class);
+                                startActivityForResult(in, 1);
+                            }
+                        })
+                        .setNegativeButton("Place", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        getMap();
+                    }
+                })
+                        .setIcon(R.drawable.icon)
+                        .show();
             }
         });
 
@@ -112,6 +188,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startService(in);
+                findViewById(R.id.start).setVisibility(View.GONE);
+                findViewById(R.id.stop).setVisibility(View.VISIBLE);
+                ((TextView) findViewById(R.id.locText)).setText("Warming up the GPS...");
             }
         });
 
@@ -119,6 +198,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 stopService(in);
+                findViewById(R.id.start).setVisibility(View.VISIBLE);
+                findViewById(R.id.stop).setVisibility(View.GONE);
+                locationText.setText("");
             }
         });
     }
@@ -135,7 +217,6 @@ public class MainActivity extends AppCompatActivity {
             // TODO: Handle the error.
         }
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -165,6 +246,15 @@ public class MainActivity extends AppCompatActivity {
         //Toast.makeText(this, "Lat is "+rand, Toast.LENGTH_SHORT).show();
 
     }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        unregisterReceiver(updateUIReciver);
+        unregisterReceiver(updateUIReciver2);
+        unregisterReceiver(updateUIReciver3);
+    }
+
 
 }
 

@@ -4,38 +4,47 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/icon"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/icon"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <action android:name="ado.fun.code.locationize.stop" />
+                <action android:name="ado.fun.code.locationize.on" />
+                <action android:name="ado.fun.code.locationize.off" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".DummyBrightnessActivity"/>
+        <activity android:name=".DummyBrightnessActivity" />
 
         <meta-data
-
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCUhpO51Kev_ClgXWX97RdqhpvVSRwgDLA"/>
+            android:value="AIzaSyCUhpO51Kev_ClgXWX97RdqhpvVSRwgDLA" />
 
         <service android:name=".GetDistance" />
-
         <service android:name=".MuteService" />
 
-        <receiver android:name=".ActionReceiver"/>
+        <receiver android:name=".ActionReceiver" >
+            <intent-filter>
+                <action android:name="ado.fun.code.locationize.restore"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".DayChangeReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.DATE_CHANGED"/>
+            </intent-filter>
+        </receiver>
 
+        <activity android:name=".InputDays"></activity>
     </application>
 
 </manifest>

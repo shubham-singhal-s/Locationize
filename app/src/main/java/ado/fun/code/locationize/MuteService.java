@@ -7,11 +7,9 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
 
 /**
  * Created by mahe on 24-02-2018.
@@ -34,16 +32,6 @@ public class MuteService extends Service {
 
     @Override
     public void onCreate() {
-        receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-
-            }
-        };
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("android.provider.Telephony.SMS_RECEIVED");
-
 
     }
 
@@ -66,27 +54,33 @@ public class MuteService extends Service {
         Intent intent = new Intent(this, DummyBrightnessActivity.class);
         intent.putExtra("bright",0);
         startActivity(intent);
+        onDestroy();
     }
 
     @Override
     public void onDestroy(){
 
+        super.onDestroy();
+
     }
 
     public void sendNotif(){
         Intent intent = new Intent(this, ActionReceiver.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pintent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = new Notification.Builder(this)
-                .setContentIntent(PendingIntent.getActivity(this, 0, getNotificationIntent(), PendingIntent.FLAG_UPDATE_CURRENT))
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(PendingIntent.getBroadcast(this, 0, getNotificationIntent(), PendingIntent.FLAG_UPDATE_CURRENT))
+                .setSmallIcon(R.drawable.icon)
                 .setTicker("Action Buttons Notification Received")
                 .setContentTitle("Phone put on silent")
                 .setContentText("Phone is on silent as you are in class")
                 .setWhen(System.currentTimeMillis())
                 .setAutoCancel(true)
                 .addAction(new Notification.Action(R.mipmap.ic_launcher, "Dismiss",
-                        PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT))).build();
+                        pintent)).build();
+        notification.flags = Notification.FLAG_AUTO_CANCEL|Notification.FLAG_ONGOING_EVENT;
+
         notificationManager.notify(1, notification);
     }
 
@@ -96,24 +90,9 @@ public class MuteService extends Service {
         edit.commit();
     }
 
-    public void restoreState(){
-        int mode, brightness;
-        brightness = sp.getInt("bright",0);
-        mode = sp.getInt("mode",NotificationManager.INTERRUPTION_FILTER_ALL);
-        try{
-            notificationManager.setInterruptionFilter(mode);
-            Intent intent = new Intent(this, DummyBrightnessActivity.class);
-            intent.putExtra("bright",brightness);
-            startActivity(intent);
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-
-    }
 
     private Intent getNotificationIntent() {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, ActionReceiver.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return intent;
     }

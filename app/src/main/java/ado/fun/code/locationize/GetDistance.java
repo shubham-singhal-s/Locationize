@@ -38,7 +38,9 @@ public class GetDistance extends Service implements LocationListener {
 
     @Override
     public void onCreate() {
-
+        Intent local = new Intent();
+        local.setAction("ado.fun.code.locationize.on");
+        this.sendBroadcast(local);
     }
 
     @Override
@@ -54,7 +56,7 @@ public class GetDistance extends Service implements LocationListener {
 
         try {
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1, this);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, this);
         } catch (SecurityException e) {
             e.printStackTrace();
         }
@@ -78,18 +80,33 @@ public class GetDistance extends Service implements LocationListener {
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
         locationManager.removeUpdates(this);
+        Intent local = new Intent();
+        local.setAction("ado.fun.code.locationize.off");
+        this.sendBroadcast(local);
+        local.setAction("ado.fun.code.locationize.stop");
+        this.sendBroadcast(local);
+
     }
 
     @Override
     public void onLocationChanged(final Location location) {
         Handler handler = new Handler(Looper.getMainLooper());
         dist = distance(lat, location.getLatitude(), lon, location.getLongitude());
-        if (dist < 1400) {
+
+        Intent local = new Intent();
+        local.setAction("ado.fun.code.locationize.off");
+        this.sendBroadcast(local);
+
+        if (dist < 100) {
             Log.d("Verma", "Verma");
             startService(new Intent(getBaseContext(), MuteService.class));
             locationManager.removeUpdates(this);
+            onDestroy();
+
         }
+
         //Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
 
@@ -106,6 +123,7 @@ public class GetDistance extends Service implements LocationListener {
     @Override
     public void onProviderDisabled(String provider) {
         Toast.makeText(getApplicationContext(), "Please connect GPS", Toast.LENGTH_SHORT).show();
+        onDestroy();
     }
 
 
